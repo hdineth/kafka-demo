@@ -9,7 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.config.KafkaListenerContainerFactory;
+import org.springframework.kafka.config.KafkaListenerEndpoint;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
+import org.springframework.kafka.config.MethodKafkaListenerEndpoint;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
@@ -44,12 +47,14 @@ public class KafkaConsumerConfig {
     }
 
 
+
+
     @Bean
     public ConcurrentKafkaListenerContainerFactory<Object, Object> kafkaListenerContainerFactory(ConsumerFactory<Object, Object> consumerFactory,
         ListenerContainerRegistry registry, TaskScheduler scheduler) {
         ConcurrentKafkaListenerContainerFactory<Object, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
-        KafkaConsumerBackoffManager backOffManager = createBackOffManager(new KafkaListenerEndpointRegistry(), scheduler);
+        KafkaConsumerBackoffManager backOffManager = createBackOffManager(registry, scheduler);
         factory.getContainerProperties()
             .setAckMode(ContainerProperties.AckMode.RECORD);
         factory.setContainerCustomizer(container -> {
@@ -59,6 +64,11 @@ public class KafkaConsumerConfig {
             container.setupMessageListener(delayedAdapter);
         });
         return factory;
+    }
+
+    @Bean
+    public KafkaListenerEndpointRegistry registry() {
+        return  new KafkaListenerEndpointRegistry();
     }
 
     @Bean
